@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Intuit Interview Exercise</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<h1>Movies will be premiering in the next month</h1>
+<div id="id01"></div>
+
+<script>
+
+// Create XMLHttpRequest to connect to URL
+var xmlhttp;
+try{
+    xmlhttp = new XMLHttpRequest();
+} catch (e){
+    try{
+        xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+    } catch (e) {
+        // For old IE5 and IE6 browsers
+        try{
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        } catch (e){
+            // Something went wrong
+            alert("There is a error!");
+        }
+    }
+}
+
+// Get URL that returns movie premier listing for next month in JSON format
+var url;
+if ((navigator.userAgent.toLowerCase().indexOf('chrome') > -1) || 
+    ((navigator.appName == 'Microsoft Internet Explorer') || ((navigator.appName == 'Netscape') && 
+    (new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})").exec(navigator.userAgent) != null)))) {
+    
+    // For IE and Chrome browser, get movie listing from live URL
+    //alert("IE");
+    
+    // Get month parameter to pass to the URL
+    var d = new Date();
+    var monthNum = (d.getMonth()+2) % 12; // So the monthNum is always 1 to 12.
+    var month = "";
+    if (monthNum<10) {
+        // For 1 to 9, add "0" as prefix
+        month = "0"+monthNum;
+    } else {
+        // For 11 and 12 just convert it to string.
+        month = ""+monthNum;
+    }
+    
+    // Live URL to get movie premier listing
+    //alert(month);
+    url = "http://www.myapifilms.com/imdb/comingSoon?format=JSON&lang=en-us&date=2015-" + month + "&token=236cf26e-e04f-4e92-b8ee-d3040bde3ffd";
+} else {
+    // If browser is not IE or Chrome then there is cross-domain issue.
+    // For this POC, use hard coded JSON informaation from local file (it has movies coming up on June).
+    //alert("Non IE");
+    url = "movieData.json";
+}
+
+// Connect to URL
+xmlhttp.open("GET", url, true);
+xmlhttp.send();
+
+// If connection to URL is good then call myFunction to parse the response and display the movie listing
+xmlhttp.onreadystatechange=function() {
+    if (xmlhttp.readyState == 4) {
+        if (xmlhttp.status == 200) {
+            myFunction(xmlhttp.responseText);
+        } else {
+            alert("Failed to connection to: " + url);
+            alert("If your browser is Chrome then try to open it with --disable-web-security option on. Readme file has detail instruction.");
+        }
+    }
+}
+
+// The function parses JSON text and display movie listing in a table.
+// The table shows date, rated, poster, and summary of the movies and
+// user can click on the movie poster to go to imdb.com for more detail information.
+function myFunction(response) {
+    var arr = JSON.parse(response);
+    var i, j;
+    var out = '<table class="table table-bordered table-striped" id="myTable">' + 
+              '<tr style="padding:15px; border:2px solid black">' + 
+              '<th>Title</th>  <th>Date</th> <th>Rated</th> <th>Poster</th> <th>Summary</th></tr>';
+
+    for(i = 0; i < arr.length; i++) {
+        var movies = arr[i].movies;
+        
+        for (j = 0; j < movies.length; j++) {
+            // If rated is empty string then use "N/A"
+            var rated = movies[j].rated==""? "N/A" : movies[j].rated;
+            
+            out += '<tr style="padding:15px; border:2px solid black">'+
+                    '<td style="width:100px"><a href="' + movies[j].urlIMDB + '" target="_blank">' + movies[j].title +
+                    '</td><td style="width:70px">' + arr[i].date +
+                    '</td><td style="width:70px">' + rated +
+                    '<td><a href="' + movies[j].urlIMDB + '" target="_blank">' +
+                    '<img src="' + movies[j].urlPoster + 
+                    '" style="width:100px;height:150px;border:0"></a>' +
+                    "</td><td>" + movies[j].simplePlot +
+                    "</td></tr>";
+        }
+        
+    }
+    out += "</table>"
+    document.getElementById("id01").innerHTML = out;
+}
+
+</script>
+
+</body>
+</html> 

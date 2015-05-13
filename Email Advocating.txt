@@ -1,0 +1,43 @@
+Hi!
+As I mentioned from the last team meeting, there is a serious performance issue with importing more than 100,000 records from the importing file.
+The existing transaction importing code in TransactionImportManager class is good to import records for a single reconciliation, but
+it needs to be reworked to support the new requirement to import transactions to multiple reconciliations.
+From my initial experiment, importing 100,000 transaction records to 100 reconciliations took more than 2 hours.
+Also, before the importing process begins, we have to clean up old transaction records.
+Unfortunately, this clean up process itself is already taking 20 mins.
+Please note that the requirement from customers is importing 100,000 transactions in no more than 20 mins all together.
+
+Here are the 2 major issues I found and proposal for solutions;
+1) The current importing logic is using ADF ViewObject's remove() API to delete records from database tables.
+   This approach is nice to use because it uses built-in functionality in VO object to delete rows from database tables and
+   it also automatically takes care of deleting rows from other tables related to transaction records.
+   However, if it comes down to performance, this approach is too slow to delete 100,000 rows one by one.
+
+   My proposal is to use raw "Delete From" query from JDBC.
+   I experimented it by first collecting a list of all the reconciliations currently being imported and
+   use "Delete From" query to delete transaction records associated with importing process at once.
+   
+   For example:
+   Delete From ARM_TRANSACTIONS
+   Where RECONCILIATION_ACCOUNT_ID IN (<List of Reconciliations>) and PERIOD_ID = <Selected Period>;
+
+   This way, the deleting logic will only take a few seconds to clean up all the transaction records.
+   There are 8 more database tables that are associated with the transaction records and I can use simliar delete query to clean them all.
+
+2) The current importing logic is importing transaction records for one reconciliation at a time.
+   This logic works for importing transaction records for one reconciliation, but this is, again, a very slow approach for multiple reconciliations.
+   
+   My proposal is to first read all the reconciliations up front and keep them in cache and process importing process using the cached information.
+   Also, this approach will allow inserting logic to insert transaction records for multiple reconciliations as a batched job.
+   This will also improve overall performance far more.
+
+3) Moreover, current importing process is synchronized solution but I recommend to change it to asynchronous job for next release.
+   It requires a lot more work to be done in server side. We can talk more about it...
+
+I am open to discuss these issues further more with the team.
+Let me know if you want to arrange another meeting to go over it in more detail.
+If everyone is happy with my approach then I will go ahead and implement the solution.
+
+Thanks,
+
+Sang
