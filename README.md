@@ -18,3 +18,7 @@ On Mac:
 open /Applications/Google\ Chrome.app/ --args --disable-web-security
 
 For FireFox, MoviePremierListing gets a movie metadata from a local file, "movieData.json" (which has a JSON format movie metadata for the month of June). The "movieData.json" file should be located on the same location as the "MoviePremierListing.html".  
+
+Testing Instructions:
+I successfully tested MoviePremierListing web page from my Windows 7 machine with IE, FireFox, and Chrome browsers.
+You can run it by downloading both MoviePremierListing.html and movieData.json on your local file system and open the html file on your browser. It will display a table with the movie title, date, rated, poster, and summary. You can also click on the movie title or poster to open a new page and display detailed information about the movie.
